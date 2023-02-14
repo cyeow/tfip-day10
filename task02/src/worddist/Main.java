@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,36 +23,103 @@ public class Main {
         validateDirectory(directory);
         File[] files = directory.listFiles();
 
-        // load content in files
-        List<String> corpus = loadFileContent(files);
+        // generate next word distribution
+        Map<String, Map<String, Integer>> nextWordDistribution = getNextWordDistribution(files);
 
-        // process content into map 
-        Map<String,Map<String,Integer>> worddist = new HashMap<>();
+        // calculate probability
+        Map<String, Map<String, Double>> nextWordDistProbability = new HashMap<>();
 
-        String w1 = "", w2 = "";
+        for(String w1 : nextWordDistribution.keySet()) {
+            // find total number of next words (not unique)
+            Integer numWords = nextWordDistribution.get(w1).values().stream().reduce(0, Integer::sum);
 
-        for(String line : corpus) {
-            
-        }
-        
-    }
+            for(String w2 : nextWordDistribution.get(w1).keySet()) {
+                // iterate through the nextWord map
+                
+                // calculate probability 
+                Double probability = nextWordDistribution.get(w1).get(w2) / Double.valueOf(numWords.toString());
 
-    private static List<String> loadFileContent(File[] files) throws IOException {
-        List<String> corpus = new ArrayList<>();
-        
-        for(File f : files) {
-            if(f.isFile()) {
-                try {
-                    corpus.addAll(readFromFile(f));
-                } catch (FileNotFoundException ex) {
-                    System.out.println("File not found!");
-                }    
-            } else {
-                System.out.println(f.getName() + " skipped as it is a directory.");
+                // put into nextWordDistProbability
+                if(nextWordDistProbability.containsKey(w1)) {
+                    // map has w1
+
+                    if(nextWordDistProbability.get(w1).containsKey(w2)) {
+                        // as nextWordDistribution is a unique set, logically w2 will not exist in nextWordDistProbability before we iterate through it
+                        // but will check anyway and overwrite previous data, though the number should be the same.
+                        nextWordDistProbability.get(w1).replace(w2, probability);
+
+                    } else {
+                        // map has w1 but submap does not have w2
+                        nextWordDistProbability.get(w1).put(w2, probability);
+                        
+                    }
+                } else {
+                    // map does not have w1 --> create w2 map and put w1, w2map into the map
+                    Map<String, Double> w2map = new HashMap<>();
+                    w2map.put(w2, probability);
+
+                    nextWordDistProbability.put(w1, w2map);
+                }
             }
         }
 
-        return corpus;
+        System.out.println(nextWordDistProbability);
+    }
+
+    private static Map<String, Map<String, Integer>> getNextWordDistribution(File[] files) throws IOException {
+        Map<String,Map<String,Integer>> nextWordDistribution = new HashMap<>();
+
+        String w1 = "", w2 = "";
+
+        for(File f : files) {
+            // load content in file
+            // loading is done separately instead of combined as before, as words from separate books should not be compared to one another
+            List<String> corpus = readFromFile(f);
+
+            // process content into map 
+            for(String line : corpus) {
+                // split into individual words, ignoring whitespaces
+                List<String> words = Arrays.asList(line.split("\\s+"));
+                
+                for(String word : words) {
+                    // set first word
+                    if(w1.equals("")) {
+                        w1 = word;
+                        continue;
+                    } 
+    
+                    w2 = word;
+    
+                    if(nextWordDistribution.containsKey(w1)) {
+                        // map has w1 --> check if submap has w2 --> update integer count if yes --> put w2 if no
+    
+                        if(nextWordDistribution.get(w1).containsKey(w2)) {
+                            // submap has w2 --> update integer count
+                            nextWordDistribution.get(w1).replace(w2, (nextWordDistribution.get(w1).get(w2) + 1));
+    
+                        } else {
+                            // submap does not have w2 --> put
+                            nextWordDistribution.get(w1).put(w2, 1);
+    
+                        }
+    
+                    } else {
+                        // map does not have w1 --> put w1 with value w2, 1
+                        Map<String, Integer> w2map = new HashMap<>();
+                        w2map.put(w2, 1);
+    
+                        nextWordDistribution.put(w1, w2map);
+                    }
+    
+                    w1 = w2;
+                }
+
+                // reset first word
+                w1 = "";
+            }
+    
+        }
+        return nextWordDistribution;
     }
 
     private static void validateDirectory(File directory) {
@@ -68,20 +136,33 @@ public class Main {
 
     }
 
-    private static List<String> readFromFile(File file) throws FileNotFoundException, IOException {
-        FileReader fr = new FileReader(file);
-        BufferedReader br = new BufferedReader(fr);
-        List<String> result = new ArrayList<>();
-        String line = "";
-
-        while((line = br.readLine()) != null) {
-            if(!(line.isEmpty() || line.trim().equals("") || line.trim().equals("\n"))) {
-                result.add(line.replaceAll("[^a-zA-Z ]", "").toLowerCase());    
-            }
+    private static List<String> readFromFile(File file) throws IOException {
+        
+        if(file.isDirectory()) {
+            System.out.println(file.getName() + " is a directory.");
+            return null;
         }
 
-        br.close();
-        fr.close();
+        FileReader fr = null;
+        BufferedReader br = null;      
+        List<String> result = new ArrayList<>();
+
+        try {
+            fr = new FileReader(file);
+            br = new BufferedReader(fr);
+            String line = "";
+    
+            while((line = br.readLine()) != null) {
+                if(!(line.isEmpty() || line.trim().equals("") || line.trim().equals("\n"))) {
+                    result.add(line.replaceAll("[^a-zA-Z ]", "").toLowerCase());    
+                }
+            }    
+        } catch (FileNotFoundException ex) {
+            System.out.println("File not found!");
+        } finally {
+            br.close();
+            fr.close();    
+        }
 
         return result;
     }
