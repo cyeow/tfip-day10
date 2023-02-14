@@ -34,6 +34,7 @@ public class Main {
     }
 
     private static void printNeatMap(Map<String, Map<String, Double>> nextWordDistProbability) {
+        // print probabilities up to 3 decimal points
         DecimalFormat df = new DecimalFormat("#.###");
         
         for(String w1 : nextWordDistProbability.keySet()) {
@@ -170,6 +171,7 @@ public class Main {
             String line = "";
     
             while((line = br.readLine()) != null) {
+                // ignores empty strings & removes punctuation from the text
                 if(!(line.isEmpty() || line.trim().equals("") || line.trim().equals("\n"))) {
                     result.add(line.replaceAll("[^a-zA-Z ]", "").toLowerCase());    
                 }
@@ -183,6 +185,4 @@ public class Main {
 
         return result;
     }
-
-
 }
