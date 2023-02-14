@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -21,12 +22,30 @@ public class Main {
         // validate directory and load list of files
         File directory = new File(args[0]);
         validateDirectory(directory);
-        File[] files = directory.listFiles();
 
         // generate next word distribution
-        Map<String, Map<String, Integer>> nextWordDistribution = getNextWordDistribution(files);
+        Map<String, Map<String, Integer>> nextWordDistribution = getNextWordDistribution(directory.listFiles());
 
         // calculate probability
+        Map<String, Map<String, Double>> nextWordDistProbability = calculateNextWordDistProbability(nextWordDistribution);
+
+        // print out neatly
+        printNeatMap(nextWordDistProbability);
+    }
+
+    private static void printNeatMap(Map<String, Map<String, Double>> nextWordDistProbability) {
+        DecimalFormat df = new DecimalFormat("#.###");
+        
+        for(String w1 : nextWordDistProbability.keySet()) {
+            System.out.println(w1);
+
+            for(String w2 : nextWordDistProbability.get(w1).keySet()) {
+                System.out.println("\t" + w2 + "\t" + df.format(nextWordDistProbability.get(w1).get(w2)));
+            }
+        }
+    }
+
+    private static Map<String, Map<String, Double>> calculateNextWordDistProbability(Map<String, Map<String, Integer>> nextWordDistribution) {
         Map<String, Map<String, Double>> nextWordDistProbability = new HashMap<>();
 
         for(String w1 : nextWordDistribution.keySet()) {
@@ -62,8 +81,7 @@ public class Main {
                 }
             }
         }
-
-        System.out.println(nextWordDistProbability);
+        return nextWordDistProbability;
     }
 
     private static Map<String, Map<String, Integer>> getNextWordDistribution(File[] files) throws IOException {
@@ -113,11 +131,10 @@ public class Main {
     
                     w1 = w2;
                 }
-
-                // reset first word
-                w1 = "";
             }
-    
+
+            // reset first word at end of file
+            w1 = "";
         }
         return nextWordDistribution;
     }
