@@ -15,7 +15,7 @@ import java.util.Map;
 public class Main {
     public static void main(String[] args) throws IOException {
         if(args.length <= 0) {
-            System.out.println("Usage: java -d classes worddist.Main <directory_name>");
+            System.out.println("Usage: java -cp classes worddist.Main <directory_name>");
             System.exit(0);
         }
 
@@ -41,7 +41,7 @@ public class Main {
             System.out.println(w1);
 
             for(String w2 : nextWordDistProbability.get(w1).keySet()) {
-                System.out.println("\t" + w2 + "\t" + df.format(nextWordDistProbability.get(w1).get(w2)));
+                System.out.println("    " + w2 + "  " + df.format(nextWordDistProbability.get(w1).get(w2)));
             }
         }
     }
@@ -85,18 +85,22 @@ public class Main {
         return nextWordDistProbability;
     }
 
-    private static Map<String, Map<String, Integer>> getNextWordDistribution(File[] files) throws IOException {
+    private static Map<String, Map<String, Integer>> getNextWordDistribution(File[] corpus) throws IOException {
         Map<String,Map<String,Integer>> nextWordDistribution = new HashMap<>();
 
         String w1 = "", w2 = "";
 
-        for(File f : files) {
+        for(File c : corpus) {
             // load content in file
             // loading is done separately instead of combined as before, as words from separate books should not be compared to one another
-            List<String> corpus = readFromFile(f);
+            List<String> book = readFromFile(c);
+
+            if(book == null) {
+                continue;
+            }
 
             // process content into map 
-            for(String line : corpus) {
+            for(String line : book) {
                 // split into individual words, ignoring whitespaces
                 List<String> words = Arrays.asList(line.split("\\s+"));
                 
@@ -171,7 +175,7 @@ public class Main {
             String line = "";
     
             while((line = br.readLine()) != null) {
-                // ignores empty strings & removes punctuation from the text
+                // ignores empty strings & removes all punctuation and numbers from the text (i.e. only retains latin alphabet characters)
                 if(!(line.isEmpty() || line.trim().equals("") || line.trim().equals("\n"))) {
                     result.add(line.replaceAll("[^a-zA-Z ]", "").toLowerCase());    
                 }

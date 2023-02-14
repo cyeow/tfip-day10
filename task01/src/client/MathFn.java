@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class MathFn {
 
     public Double mean(String input) {
+        // mean = sum of all numbers / number of numbers
         Double sum = add(input);
         Integer numNumbers = getNumbersFromString(input).size();
 
@@ -12,6 +13,8 @@ public class MathFn {
     }
     
     public Double stdev(String input) {
+        // stdev = sqrt(sum((number - mean)^2)/number of numbers)
+        
         Double stdev;
         Double sumDev = 0d;
         ArrayList<Double> numbers = getNumbersFromString(input);
@@ -28,6 +31,7 @@ public class MathFn {
     }
     
     private Double add(String input) {
+        // sum of numbers
         ArrayList<Double> numbers = getNumbersFromString(input);
         Double result = 0d;
 
@@ -39,6 +43,8 @@ public class MathFn {
     }
 
     private ArrayList<Double> getNumbersFromString(String input) {
+        // split string into numbers; skips non-numerical input
+
         String[] array = input.split(",");
         ArrayList<Double> result = new ArrayList<>();
 
